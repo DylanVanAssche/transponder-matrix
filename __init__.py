@@ -11,7 +11,7 @@ Transponder is a Sailfish OS application that provide access to different
 messaging providers using Python plugins.
 """
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 import sys
 sys.path.append("./matrix/matrix-python-sdk") # make matrix_client visible
