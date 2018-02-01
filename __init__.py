@@ -14,6 +14,10 @@ messaging providers using Python plugins.
 __version__ = "0.0.2"
 
 import sys, os
+sys.path.append(os.path.join(os.path.dirname(__file__), "urllib3"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "python-certifi"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "idna"))
+sys.path.append(os.path.join(os.path.dirname(__file__), "chardet"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "requests"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "matrix-python-sdk"))
 
