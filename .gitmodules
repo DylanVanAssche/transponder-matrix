@@ -1,3 +1,6 @@
 [submodule "matrix-python-sdk"]
 	path = matrix-python-sdk
 	url = https://github.com/matrix-org/matrix-python-sdk
+[submodule "requests"]
+	path = requests
+	url = https://github.com/requests/requests.git
