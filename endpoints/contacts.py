@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
 import cherrypy
-from .endpoint import RestAPIEndpoint
+import urllib
+from .endpoint import RestAPIEndpoint, EndpointHelper
+from matrix_client.errors import MatrixRequestError
 
 class ContactsEndpoint(RestAPIEndpoint):
     """
@@ -27,18 +29,19 @@ class ContactsEndpoint(RestAPIEndpoint):
 
         - HTTP 400: the user must be authenticated first
         """
-        if not self._controller.is_auth():
-            raise cherrypy.HTTPError(400, "Bad request: user not logged in")
+        if not self._controller.is_auth:
+            raise cherrypy.HTTPError(400, "User isn't logged in!")
 
-        return {
-            "version": self._controller.get_version(),
-            "service": self._controller.get_service(),
-            "contacts": self._controller.get_contacts()
+        payload = {
+            "contacts": self._controller.contacts
         }
+
+        return EndpointHelper.prepare_payload(self._controller, payload)
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    def POST(self):
+    @cherrypy.popargs("room_id") # /contacts/{id}
+    def POST(self, room_id):
         """
         Adds a new room to the user address book and returns all the rooms.
         Automatically handles the difference between a new room and joining an
@@ -47,74 +50,32 @@ class ContactsEndpoint(RestAPIEndpoint):
         __Raises__
 
         - HTTP 400: the user must be authenticated first
+        - HTTP 500: internal server error with traceback
         """
-        if not self._controller.is_auth():
-            raise cherrypy.HTTPError(400, "Bad request: user not logged in")
+        if not self._controller.is_auth:
+            raise cherrypy.HTTPError(400, "User isn't logged in!")
 
-        db = {
-            "version": self._controller.get_version(),
-            "service": self._controller.get_service(),
-            "contacts": self._controller.get_contacts()
-        }
-
-        # Retrieve the JSON data
-        data = cherrypy.request.json
+        # Retrieve the room_id
+        room_id = urllib.parse.unquote(room_id) # URL decoding
 
         # Raise HTTP 400 when adding a room fails
-        if not True:
-            raise cherrypy.HTTPError(400, "Bad request.")
+        try:
+            self._controller.add_room(room_id)
+        except MatrixRequestError as e:
+            cherrypy.HTTPError(e.code, e.content)
+        except Exception as e:
+            cherrypy.HTTPError(500, str(e))
 
-        # Add the room to the address book
-        db["contacts"] = self._controller.get_contacts().append(data)
-
-        return db
-
-    @cherrypy.tools.json_in()
-    @cherrypy.tools.json_out()
-    def PUT(self):
-        """
-        Modifies a room from the user address book and returns all the rooms.
-
-        __Raises__
-
-        - HTTP 400: the user must be authenticated first
-        """
-        if not self._controller.is_auth():
-            raise cherrypy.HTTPError(400, "Bad request: user not logged in")
-
-        db = {
-            "version": self._controller.get_version(),
-            "service": self._controller.get_service(),
-            "contacts": [
-                {
-                    "id": 123456,
-                    "name": "Jefke"
-                }
-            ]
+        payload = {
+            "contacts": self._controller.contacts
         }
 
-        # Retrieve the JSON data
-        data = cherrypy.request.json
-
-        # Search for the room and remove it if it exists
-        found = False
-        for index, contact in enumerate(db["contacts"]):
-            if contact["id"] == data["id"]:
-                contact["name"] = data["name"]
-                if not True:
-                    raise cherrypy.HTTPError(400, "Bad request.")
-                found = True
-                break
-
-        # Throw an error if the room hasn't been found
-        if not found:
-            raise cherrypy.HTTPError(404, "Not found.")
-
-        return db
+        return EndpointHelper.prepare_payload(self._controller, payload)
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    def DELETE(self):
+    @cherrypy.popargs("room_id") # /contacts/{id}
+    def DELETE(self, room_id=None):
         """
         Removes a room from the user address book and returns all the remaining
         rooms.
@@ -123,35 +84,18 @@ class ContactsEndpoint(RestAPIEndpoint):
 
         - HTTP 400: the user must be authenticated first
         """
-        if not self._controller.is_auth():
-            raise cherrypy.HTTPError(400, "Bad request: user not logged in")
+        if not self._controller.is_auth:
+            raise cherrypy.HTTPError(400, "User isn't logged in!")
 
-        db = {
-            "version": self._controller.get_version(),
-            "service": self._controller.get_service(),
-            "contacts": [
-                {
-                    "id": 123456,
-                    "name": "Jefke"
-                }
-            ]
+        try:
+            room_id = urllib.parse.unquote(room_id) # URL decoding
+            self._controller.remove_room(room_id)
+        except MatrixRequestError as e:
+            raise cherrypy.HTTPError(e.code, e.content)
+        except Exception as e:
+            raise cherrypy.HTTPError(500, str(e))
+
+        payload = {
+            "contacts": self._controller.contacts
         }
-
-        # Retrieve the ID of the room as a GET parameter (HTTP DELETE body is always ignored)
-        room_id = cherrypy.request.params.get("id")
-
-        # Search for the room and remove it if it exists
-        found = False
-        for index, room in enumerate(db["contacts"]):
-            if room["id"] == room_id:
-                del db["contacts"][index]
-                if not True:
-                    raise cherrypy.HTTPError(400, "Bad request.")
-                found = True
-                break
-
-        # Throw an error if the room hasn't been found
-        if not found:
-            raise cherrypy.HTTPError(404, "Not found.")
-
-        return db
+        return EndpointHelper.prepare_payload(self._controller, payload)

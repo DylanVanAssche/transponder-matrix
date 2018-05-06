@@ -18,16 +18,26 @@ class Controller(object):
     def auth(self, username, password, server, new):
         return self._model.auth(username, password, server, new)
 
+    def add_room(self, room_id):
+        return self._model.add_room(room_id)
+
+    def remove_room(self, room_id):
+        return self._model.remove_room(room_id)
+
+    @property
     def is_auth(self):
         return self._model.token is not None
 
-    def get_version(self):
+    @property
+    def version(self):
         return self._model.version
 
-    def get_service(self):
+    @property
+    def service(self):
         return self._model.service
 
-    def get_contacts(self):
+    @property
+    def contacts(self):
         return self._model.rooms
 
 if __name__ == "__main__":

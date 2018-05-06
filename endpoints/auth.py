@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import cherrypy
-from .endpoint import RestAPIEndpoint
+from .endpoint import RestAPIEndpoint, EndpointHelper
 from matrix_client.errors import MatrixRequestError
 
 class AuthEndpoint(RestAPIEndpoint):
@@ -47,13 +47,19 @@ class AuthEndpoint(RestAPIEndpoint):
                 data["new"]
             )
         except MatrixRequestError as e:
-            if e.code == 401: # HTTP 401 when captcha is required for registration
-                raise cherrypy.HTTPError(400, "Bad request: authentication failed due missing captcha support, create an account on the server via a webbrowser first.\n {0}".format(e))
-            raise cherrypy.HTTPError(400, "Bad request: {0}".format(e))
+            # HTTP 401 when captcha is required for registration
+            if e.code == 401:
+                raise cherrypy.HTTPError(400, "Authentication failed due missing captcha support, create an account on the server via a webbrowser first.\n {0}".format(e))
+
+             # HTTP 403 when password/username is wrong
+            elif e.code == 403:
+                raise cherrypy.HTTPError(403, "Username or password is wrong!")
+
+            # Unknown HTTP error
+            raise cherrypy.HTTPError(e.code, e.content)
 
         # Return the token and meta data on success.
-        return {
-            "version": self._controller.get_version(),
-            "service": self._controller.get_service(),
+        payload = {
             "token": token
         }
+        return EndpointHelper.prepare_payload(self._controller, payload)

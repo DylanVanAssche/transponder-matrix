@@ -46,3 +46,28 @@ class RestAPIEndpoint(object):
         Handles a HTTP DELETE request for the endpoint.
         """
         raise cherrypy.HTTPError(405, "Method not implemented.")
+
+class EndpointHelper(object):
+    """
+    EndpointHelper provides several helper functions as static methods for all
+    the endpoints.
+    """
+
+    @staticmethod
+    def prepare_payload(controller, payload):
+        """
+        Adds the default properties to the given payload.
+
+        __Parameters__
+
+        - controller: the MVC controller instance
+        - payload: the data required for the endpoint
+
+        __Returns__
+
+        - payload: the data required for the endpoint with the default
+        properties added.
+        """
+        payload["version"] = controller.version
+        payload["service"] = controller.service
+        return payload
