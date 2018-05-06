@@ -2,6 +2,8 @@
 
 import abc
 import cherrypy
+import json
+import urllib
 
 class RestAPIEndpoint(object):
     """
@@ -71,3 +73,29 @@ class EndpointHelper(object):
         payload["version"] = controller.version
         payload["service"] = controller.service
         return payload
+
+    @staticmethod
+    def decode(text):
+        """
+        Encapsulates the `urllib.parse.unquote` to centralize the `urllib`
+        dependency.
+
+        __Parameters__
+
+        - text: encoded text
+
+        __Returns__
+
+        - text: decoded text
+        """
+        return urllib.parse.unquote(text)
+
+    @staticmethod
+    def json_error_page(status, message, traceback, version):
+        response = cherrypy.response
+        response.headers["Content-Type"] = "application/json"
+        return json.dumps({
+            "status": status,
+            "message": message,
+            "traceback": traceback
+        })

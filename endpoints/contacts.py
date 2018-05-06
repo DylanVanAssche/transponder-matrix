@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import cherrypy
-import urllib
 from .endpoint import RestAPIEndpoint, EndpointHelper
 from matrix_client.errors import MatrixRequestError
 
@@ -56,7 +55,7 @@ class ContactsEndpoint(RestAPIEndpoint):
             raise cherrypy.HTTPError(400, "User isn't logged in!")
 
         # Retrieve the room_id
-        room_id = urllib.parse.unquote(room_id) # URL decoding
+        room_id = EndpointHelper.decode(room_id) # URL decoding
 
         # Raise HTTP 400 when adding a room fails
         try:
@@ -88,7 +87,7 @@ class ContactsEndpoint(RestAPIEndpoint):
             raise cherrypy.HTTPError(400, "User isn't logged in!")
 
         try:
-            room_id = urllib.parse.unquote(room_id) # URL decoding
+            room_id = EndpointHelper.decode(room_id) # URL decoding
             self._controller.remove_room(room_id)
         except MatrixRequestError as e:
             raise cherrypy.HTTPError(e.code, e.content)

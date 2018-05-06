@@ -15,8 +15,8 @@ class Model(object):
         self._controller = controller
         self.version = 0.1
         self.service = "https://matrix.org"
-        self.client = MatrixClient(self.service) #None
-        self.token = "MDAxOGxvY2F0aW9uIG1hdHJpeC5vcmcKMDAxM2lkZW50aWZpZXIga2V5CjAwMTBjaWQgZ2VuID0gMQowMDJkY2lkIHVzZXJfaWQgPSBARHlsYW5WYW5Bc3NjaGU6bWF0cml4Lm9yZwowMDE2Y2lkIHR5cGUgPSBhY2Nlc3MKMDAyMWNpZCBub25jZSA9IERpWENaRnd1ZDVOI0YqODQKMDAyZnNpZ25hdHVyZSAlyUdvFOyXRYsxUEM1w3D41Q7poQdU8_I2v6aTFw28rQo" #None
+        self.client = None
+        self.token = None
 
     def auth(self, username, password, server, new):
         """
@@ -133,12 +133,97 @@ class Model(object):
         - MatrixRequestError: leaving an unjoined is not possible.
         """
         success = False
-        for key in self.client.get_rooms():
-            room = self.client.get_rooms()[key]
-            if room_id == room.room_id:
-                success = room.leave()
-                break
+        room = self._find_room(room_id)
+        success = room.leave()
 
         if not success:
             raise MatrixRequestError(code=404, content="You can't leave a room \
             ({0}) if you haven't joined it yet.".format(room_id))
+
+    def messages(self, room_id):
+        """
+        Returns a list of messages for a specific room_id
+
+        __Parameters__
+
+        - room_id: Matrix ID of the room
+
+        __Returns__
+
+        - messages: List of messages
+        """
+        events = []
+        messages = []
+
+        # Get room
+        room = self._find_room(room_id)
+        room.event_history_limit += 10 # increment limit and retrieve more messages on each call
+        room.backfill_previous_messages(limit=10)
+        events = room.events
+
+        for event in events:
+            if event.get("type") == "m.room.message":
+                if event.get("content").get("msgtype") == "m.text":
+                    messages.append({
+                        "type": "text",
+                        "from": event.get("sender"),
+                        "content": event.get("content").get("body"),
+                        "timestamp": None, # Not supported by the Matrix.org Python SDK
+                        "read": None # Not supported by the Matrix.org Python SDK
+                    })
+                elif event.get("content").get("msgtype") == "m.image":
+                    messages.append({
+                        "type": "image",
+                        "from": event.get("sender"),
+                        "content": self.decode_download_link(event.get("content").get("url")),
+                        "timestamp": None, # Not supported by the Matrix.org Python SDK
+                        "read": None # Not supported by the Matrix.org Python SDK
+                    })
+            elif event.get("type") == "m.room.member":
+                messages.append({
+                    "type": "contact",
+                    "from": event.get("sender"),
+                    "content": "{0} {1} room".format(event.get("sender"), event.get("content").get("membership")),
+                    "timestamp": None, # Not supported by the Matrix.org Python SDK
+                    "read": None # Not supported by the Matrix.org Python SDK
+                })
+
+        return messages
+
+    def send_text(self, room_id, text):
+        """
+        Sends a basic text message to the given room.
+
+        __Parameters__
+
+        - room_id: Matrix ID of the room
+        - text: ASCII text to send
+
+        __Raises__
+
+        - MatrixRequestError: when something goes wrong while sending the message
+        a MatrixRequestError is raised
+
+        __Returns__
+
+        - success: `True` if message was sended to the room
+        """
+        room = self._find_room(room_id)
+        if room.send_text(text):
+            return True
+        return False
+
+    def decode_download_link(self, link):
+        """
+        Converts a Matrix MXC link to a normal HTTP link.
+        """
+        return self.client.api.get_download_url(link)
+
+    def _find_room(self, room_id):
+        """
+        Retrieve a Room object based on the room_id.
+        """
+        for key in self.client.get_rooms():
+            room = self.client.get_rooms()[key]
+            if room_id == room.room_id:
+                return room

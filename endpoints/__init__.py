@@ -8,3 +8,5 @@ All endpoints are inheritted from the RestAPIEndpoint abstract base class.
 from .root import RootEndpoint
 from .auth import AuthEndpoint
 from .contacts import ContactsEndpoint
+from .messages import MessagesEndpoint
+from .endpoint import EndpointHelper

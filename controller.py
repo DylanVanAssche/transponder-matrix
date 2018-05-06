@@ -24,6 +24,12 @@ class Controller(object):
     def remove_room(self, room_id):
         return self._model.remove_room(room_id)
 
+    def messages(self, room_id):
+        return self._model.messages(room_id)
+
+    def send_text(self, room_id, text):
+        return self._model.send_text(room_id, text)
+
     @property
     def is_auth(self):
         return self._model.token is not None
