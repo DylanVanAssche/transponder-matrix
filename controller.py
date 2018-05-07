@@ -7,11 +7,15 @@ This script initialize the needed modules before it runs the daemon.
 
 import cherrypy
 import matrix_client
+import sys
+from daemonator import Daemon
 from model import Model
 from api import API
 
-class Controller(object):
-    def __init__(self):
+__all__ = ["Controller"]
+
+class Controller(Daemon):
+    def run(self):
         self._model = Model(self)
         self._api = API(self)
 
@@ -47,4 +51,21 @@ class Controller(object):
         return self._model.rooms
 
 if __name__ == "__main__":
-    c = Controller()
+    # Define a PIDFile location (typically located in /tmp or /var/run)
+    daemon = Controller("/tmp/transponder_matrix_daemon.pid")
+    if len(sys.argv) == 2:
+        if "start" == sys.argv[1]:
+            daemon.start()
+        elif "stop" == sys.argv[1]:
+            daemon.stop()
+        elif "restart" == sys.argv[1]:
+            daemon.restart()
+        elif "status" == sys.argv[1]:
+            daemon.status()
+        else:
+            sys.stdout.write("Unknown command\n")
+            sys.exit(2)
+        sys.exit(0)
+    else:
+        sys.stdout.write("Usage: %s start|stop|restart|status\n" % sys.argv[0])
+        sys.exit(2)

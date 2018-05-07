@@ -3,6 +3,8 @@
 import cherrypy
 from .endpoint import RestAPIEndpoint, EndpointHelper
 
+__all__ = ["MessagesEndpoint"]
+
 class MessagesEndpoint(RestAPIEndpoint):
     """
     __/{contact_id}/messages__ contains all the messages for the contact with the
@@ -19,8 +21,7 @@ class MessagesEndpoint(RestAPIEndpoint):
         super().__init__(controller)
 
     @cherrypy.tools.json_out()
-    @cherrypy.popargs("room_id")
-    def GET(self, room_id):
+    def GET(self, room_id): # remembers room_id from /contacts/{room_id}
         """
         __Raises__
 
@@ -38,8 +39,7 @@ class MessagesEndpoint(RestAPIEndpoint):
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    @cherrypy.popargs("room_id")
-    def POST(self, room_id):
+    def POST(self, room_id): # remembers room_id from /contacts/{room_id}
         if not self._controller.is_auth:
             raise cherrypy.HTTPError(400, "User isn't logged in!")
 

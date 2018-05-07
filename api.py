@@ -8,6 +8,8 @@ localhost.
 import cherrypy
 from endpoints import RootEndpoint, AuthEndpoint, ContactsEndpoint, MessagesEndpoint, EndpointHelper
 
+__all__ = ["API"]
+
 class API(object):
     def __init__(self, controller):
         self._controller = controller
@@ -29,14 +31,6 @@ class API(object):
             }
         )
         cherrypy.tree.mount(ContactsEndpoint(self._controller), "/contacts",
-            {"/":
-                {
-                    "request.dispatch": cherrypy.dispatch.MethodDispatcher(),
-                    "error_page.default": EndpointHelper.json_error_page
-                }
-            }
-        )
-        cherrypy.tree.mount(MessagesEndpoint(self._controller), "/messages",
             {"/":
                 {
                     "request.dispatch": cherrypy.dispatch.MethodDispatcher(),

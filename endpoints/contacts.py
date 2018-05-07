@@ -2,8 +2,12 @@
 
 import cherrypy
 from .endpoint import RestAPIEndpoint, EndpointHelper
+from .messages import MessagesEndpoint
 from matrix_client.errors import MatrixRequestError
 
+__all__ = ["ContactsEndpoint"]
+
+@cherrypy.popargs("room_id") # /contacts/{room_id} global available for subendpoints as /contacts/{room_id}/messages
 class ContactsEndpoint(RestAPIEndpoint):
     """
     __/contacts__ contains all the user it's Matrix.org rooms.
@@ -18,9 +22,10 @@ class ContactsEndpoint(RestAPIEndpoint):
 
     def __init__(self, controller):
         super().__init__(controller)
+        self.messages = MessagesEndpoint(self._controller)
 
     @cherrypy.tools.json_out()
-    def GET(self):
+    def GET(self, room_id=None):
         """
         Reads all the rooms of the user and returns them.
 
@@ -39,7 +44,6 @@ class ContactsEndpoint(RestAPIEndpoint):
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    @cherrypy.popargs("room_id") # /contacts/{id}
     def POST(self, room_id):
         """
         Adds a new room to the user address book and returns all the rooms.
@@ -73,7 +77,6 @@ class ContactsEndpoint(RestAPIEndpoint):
 
     @cherrypy.tools.json_in()
     @cherrypy.tools.json_out()
-    @cherrypy.popargs("room_id") # /contacts/{id}
     def DELETE(self, room_id=None):
         """
         Removes a room from the user address book and returns all the remaining

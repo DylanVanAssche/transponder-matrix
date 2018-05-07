@@ -4,6 +4,8 @@ import cherrypy
 from .endpoint import RestAPIEndpoint, EndpointHelper
 from matrix_client.errors import MatrixRequestError
 
+__all__ = ["AuthEndpoint"]
+
 class AuthEndpoint(RestAPIEndpoint):
     """
     __/auth__ creates user accounts or logs the user in on a given server

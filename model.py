@@ -10,6 +10,8 @@ from matrix_client.client import MatrixClient
 from matrix_client.errors import MatrixRequestError
 from matrix_client.user import User
 
+__all__ = ["Model"]
+
 class Model(object):
     def __init__(self, controller):
         self._controller = controller

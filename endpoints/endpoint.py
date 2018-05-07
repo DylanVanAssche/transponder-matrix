@@ -5,6 +5,8 @@ import cherrypy
 import json
 import urllib
 
+__all__ = ["RestAPIEndpoint", "EndpointHelper"]
+
 class RestAPIEndpoint(object):
     """
     MethodDispatcher for the JSON RestAPI.
