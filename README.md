@@ -1,3 +1,5 @@
+# :warning: Not under active development anymore
+
 # transponder-matrix
 Matrix Python plugin for Transponder
 
